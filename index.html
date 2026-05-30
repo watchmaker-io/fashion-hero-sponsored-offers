@@ -17,6 +17,43 @@
       This page requires JavaScript to display.
     </div>
   </noscript>
+  <!-- PostHog analytics — token from POSTHOG_PROJECT_TOKEN env var -->
+  <script>
+    (function() {
+      var POSTHOG_KEY = 'phc_D8VzUDajMy8eziaKxWt2xGVV9PJALnoY7JWKSX4f3VCP';
+      var POSTHOG_HOST = 'https://us.i.posthog.com';
+
+      // Stub that queues all calls until the real SDK loads from CDN
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(e,t){var o=t.split(".");2==o.length&&(e=e[o[0]],t=o[1]);e[t]=function(){e.push([t].concat(Array.prototype.slice.call(arguments,0)))}}var u=e;void 0!==a?u=e[a]=[]:a="posthog";u.people=u.people||[];u.toString=function(e){var t="posthog";return"posthog"!==a&&(t+="."+a),e||(t+=" (stub)"),t};u.people.toString=function(){return u.toString(1)+" (stub)"};var d="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),l=0;l<d.length;l++)g(u,d[l]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+      posthog.init(POSTHOG_KEY, {
+        api_host: POSTHOG_HOST,
+        person_profiles: 'identified_only',
+        autocapture: false,
+        capture_pageview: false
+      });
+
+      // Load the real SDK asynchronously from CDN
+      var _s = document.createElement('script');
+      _s.src = 'https://us-assets.i.posthog.com/static/array.js';
+      _s.async = true;
+      document.head.appendChild(_s);
+
+      // Forward sponsored_listings_event debug calls to PostHog.
+      // The stub queues capture/identify until the real SDK loads.
+      var _origDebug = console.debug.bind(console);
+      console.debug = function() {
+        _origDebug.apply(console, arguments);
+        if (arguments[0] !== 'sponsored_listings_event') return;
+        var data = arguments[1] || {};
+        var props = Object.assign({}, data.payload || {}, { merchant_id: data.merchantId });
+        posthog.capture(data.event, props);
+        if (data.event === 'waitlist_signup' && data.merchantId) {
+          posthog.identify(data.merchantId, { $set: { merchant_id: data.merchantId } });
+        }
+      };
+    })();
+  </script>
 </head>
 <body>
   <div id="__bundler_thumbnail">
